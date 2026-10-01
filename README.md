@@ -68,10 +68,11 @@ In detail:
    tag. Real segments are tagged `#EXTINF:2.000,live`; ad segments are not
    (a captured one read `#EXTINF:2.000,Amazon|2474283100494`).
 3. **Backup session.** During a break the extension asks Twitch's GraphQL for
-   a new playback token with the `embed` player type, then `popout`, then the
-   360p `autoplay` session, and serves the matching rendition from the first
-   one that is clean. The main session's master playlist is cached so a
-   player reload does not open a fresh session (and a fresh preroll).
+   a new playback token with the `embed` player type, then `popout`, and serves
+   the matching rendition from the first one that is clean. It keeps your
+   quality (the "Source" strategy). The main session's master playlist is
+   cached so a player reload does not open a fresh session (and a fresh
+   preroll).
 4. **Last resort.** If every backup carries the ad as well, ad segments are
    swapped for a 1 KB blank MP4 and low-latency prefetch hints are removed, so
    nothing is shown rather than an ad.
@@ -79,8 +80,10 @@ In detail:
    the closest AVC rendition is used for the duration of the break.
 6. **Housekeeping.** The main stream is requested as a `popout` player (fewer
    prerolls on load), the mini-player-above-chat session is suppressed because
-   it plays its own ads, Twitch's "ad in progress" overlays are hidden, the
-   player keeps running in background tabs, and a stalled player is nudged.
+   it plays its own ads, Twitch's "ad in progress" overlays and the
+   content-classification disclosure ("Intended for certain audiences") are
+   hidden, the player keeps running in background tabs, and a stalled player is
+   nudged.
 7. **Channel points.** A mutation observer watches for the bonus button that
    Twitch adds under chat (the `claimable-bonus__icon` element) and clicks it
    for you, so points accrue while you watch.
@@ -99,10 +102,12 @@ midroll on a large channel, polling four parallel sessions every two seconds:
 | `site` (what the normal player uses) | Ad for the full 212 s, a 6-ad pod |
 | `embed` (first backup) | Clean for the full 212 s |
 | `popout` (second backup) | Clean, except roughly 8 s to 100 s in |
-| `autoplay`, 360p (last backup) | Clean for the full 212 s |
+| `autoplay`, 360p | Clean for the full 212 s |
 
-That is why the order is `embed` → `popout` → `autoplay`, and why the 360p
-fallback is on by default.
+That is why the order is `embed` → `popout`: `embed` alone covered the whole
+break. The lower-quality `autoplay` (360p) session was clean too, but the
+extension keeps your quality and only blanks segments if both Source backups
+carry the ad.
 
 ## Install
 
@@ -137,24 +142,18 @@ you an ad-free session and the extension stays idle.
 
 ## The popup
 
-<p align="center"><img src="assets/popup.png" alt="Popup" width="340"></p>
+<p align="center"><img src="assets/popup.png" alt="Popup" width="287"></p>
 
-- **Master switch** in the header.
-- **Live status** for the current tab: watching, skipping (with the backup in
-  use), or blanking.
-- **Breaks skipped** and **Points claimed** counters for the tab.
-- **Allow ads here** adds the current channel to an allow list, for streamers
-  you want to support with ad revenue.
-- **Auto-claim channel points**: clicks the "Claim Bonus" button under chat
-  as soon as Twitch shows it, after a short randomised delay. On by default.
-- **If every backup stream has the ad**: `360p` (default) drops to the 360p
-  session so video keeps playing; `Source` never drops quality and blanks the
-  ad instead.
-- **Request stream as a popout player**: on by default. Turn it off if a
-  particular stream refuses to start.
-- **Banner** on the player during a break, on or off.
+Deliberately minimal:
 
-Changes apply immediately, no reload needed.
+- **Master switch** in the header turns ad skipping on or off.
+- **Ads skipped** and **Points claimed** counters for the current tab.
+- **Auto-claim channel points**: clicks the "Claim Bonus" button under chat as
+  soon as Twitch shows it, after a short randomised delay. On by default.
+
+Changes apply immediately, no reload needed. Ad skipping always keeps your
+quality and blanks segments only as a last resort; the mature-content
+disclosure and Twitch's ad overlays are hidden automatically.
 
 ## Privacy
 
@@ -170,14 +169,14 @@ is `storage`.
 | --- | --- |
 | Stream freezes or spins at the end of a break | Reload the page once. If it keeps happening on a 2K/4K stream, pick a 1080p quality; the HEVC fallback has to swap renditions mid-break. |
 | Ads still play | Another ad blocker is probably active: check the console for `[No Twitch Ads] … staying idle`. Remove the other one. |
-| A stream won't start at all | Turn off *Request stream as a popout player* in the popup. |
-| Nothing in the popup | Make sure the tab is `www.twitch.tv` and that the stream is live. |
+| A stream won't start at all | The popout-token request is the usual cause. Set `forcePopoutToken` to `false` in the extension's synced storage (power-user option; there is no UI switch). |
+| Counters stay at zero | Make sure the tab is `www.twitch.tv` and the stream is live. |
 
 From DevTools (page context) you can also inspect or drive it:
 
 ```js
 window.__noTwitchAds.getStatus()     // { hasAds, stripping, midroll, backup, channel }
-window.__noTwitchAds.simulateAds(1)  // treat every playlist as an ad; 1 = embed, 2 = popout, 3 = 360p
+window.__noTwitchAds.simulateAds(1)  // treat every playlist as an ad; 1 = embed, 2 = popout
 window.__noTwitchAds.simulateAds(0)  // back to normal
 window.__noTwitchAds.reloadPlayer()  // the same reload the extension performs
 ```

@@ -14,7 +14,7 @@
 (() => {
   "use strict";
   const api = typeof browser !== "undefined" ? browser : chrome;
-  const SETTINGS_KEYS = ["enabled", "showBanner", "backupMode", "forcePopoutToken", "whitelist", "autoClaimPoints"];
+  const SETTINGS_KEYS = ["enabled", "showBanner", "forcePopoutToken", "whitelist", "autoClaimPoints"];
   const settings = { autoClaimPoints: true };
   let lastStatus = { hasAds: false, stripping: false, midroll: false, backup: null, channel: null };
   let breaks = 0;

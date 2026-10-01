@@ -1,9 +1,23 @@
-/* Hide Twitch's own "ad in progress" chrome. The video ad itself is handled by
-   src/page.js; these rules only remove the countdown/label overlays that Twitch
-   draws while it *thinks* an ad is playing. */
+/* Hides Twitch's own player chrome that we don't want. The video ads themselves
+   are handled by src/page.js; these rules only remove overlays.
+
+   1. The "ad in progress" label/countdown Twitch draws while it thinks an ad
+      is playing.
+   2. The content-classification disclosure ("Intended for certain audiences /
+      May contain: Mature-rated game"). This is the NON-blocking disclosure that
+      auto-collapses; the stream plays behind it. We do NOT touch the blocking
+      "Start Watching" gate, which lives under a different element and would stop
+      playback if hidden. */
+
 [data-a-target="video-ad-label"],
 div:has(> [data-a-target="video-ad-label"]),
 [data-a-target="video-ad-countdown"],
 [data-test-selector="ad-banner-default-text"] {
+  display: none !important;
+}
+
+.video-player [data-a-target="content-classification-warning-disclosure-overlay"],
+.video-player .disclosure-card,
+.video-player .disclosure-tool {
   display: none !important;
 }

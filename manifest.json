@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "No Twitch Ads",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Skips Twitch's server-side stitched video ads by feeding the player an ad-free backup stream during ad breaks.",
   "author": "NobbyBo11ocks",
   "homepage_url": "https://github.com/NobbyBo11ocks/no-twitch-ads",

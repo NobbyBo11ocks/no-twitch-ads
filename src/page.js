@@ -40,17 +40,18 @@
   // ------------------------------------------------------------------
   const settings = {
     enabled: true,
-    showBanner: true,
-    backupMode: "360p", // "360p" | "source"
+    showBanner: false, // on-player banner; off, no UI control
     forcePopoutToken: true,
-    whitelist: [],
+    whitelist: [], // kept for power users via storage; no UI
   };
 
   function workerSettings() {
     return {
       enabled: !!settings.enabled,
       whitelist: settings.whitelist,
-      backupPlayerTypes: settings.backupMode === "source" ? ["embed", "popout"] : ["embed", "popout", "autoplay"],
+      // "Source" behaviour: never drop to the 360p session. If both Source
+      // backups carry the ad, ad segments are blanked instead.
+      backupPlayerTypes: ["embed", "popout"],
       forcePopoutToken: !!settings.forcePopoutToken,
     };
   }
