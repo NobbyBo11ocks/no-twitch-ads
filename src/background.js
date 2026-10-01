@@ -8,6 +8,7 @@ const DEFAULTS = {
   showBanner: true,
   backupMode: "360p", // "360p" = allow the 360p fallback stream, "source" = never drop quality
   forcePopoutToken: true, // request the main stream with the "popout" player type (fewer ads)
+  autoClaimPoints: true, // click the channel-points "Claim Bonus" button when it appears
   whitelist: [], // channel logins where ad blocking is turned off
 };
 

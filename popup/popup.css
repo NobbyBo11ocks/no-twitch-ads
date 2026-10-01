@@ -197,11 +197,11 @@ h2 {
 
 .channel {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   grid-template-areas:
-    "chan  breaks"
-    "btn   btn";
-  gap: 8px 12px;
+    "chan breaks points"
+    "btn  btn    btn";
+  gap: 8px 14px;
   align-items: end;
 }
 
@@ -212,13 +212,21 @@ h2 {
   min-width: 0;
 }
 
-.stat:first-child {
+.stat.chan {
   grid-area: chan;
 }
 
-.stat:nth-child(2) {
-  grid-area: breaks;
+.stat.num {
   text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat.num:nth-of-type(2) {
+  grid-area: breaks;
+}
+
+.stat.num:nth-of-type(3) {
+  grid-area: points;
 }
 
 .label {

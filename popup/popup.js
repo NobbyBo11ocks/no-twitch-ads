@@ -3,7 +3,7 @@
 
 (() => {
   const api = typeof browser !== "undefined" ? browser : chrome;
-  const DEFAULTS = { enabled: true, showBanner: true, backupMode: "360p", forcePopoutToken: true, whitelist: [] };
+  const DEFAULTS = { enabled: true, showBanner: true, backupMode: "360p", forcePopoutToken: true, whitelist: [], autoClaimPoints: true };
 
   const $ = (id) => document.getElementById(id);
   let settings = { ...DEFAULTS };
@@ -20,6 +20,7 @@
     $("enabled").checked = !!settings.enabled;
     $("forcePopoutToken").checked = !!settings.forcePopoutToken;
     $("showBanner").checked = !!settings.showBanner;
+    $("autoClaimPoints").checked = !!settings.autoClaimPoints;
     for (const btn of $("backupMode").querySelectorAll("button")) {
       btn.setAttribute("aria-checked", String(btn.dataset.value === (settings.backupMode || "360p")));
     }
@@ -27,6 +28,7 @@
     const btn = $("whitelist-toggle");
     $("channel").textContent = channel || "not on a stream";
     $("breaks").textContent = String((tabInfo && tabInfo.breaks) || 0);
+    $("points").textContent = String((tabInfo && tabInfo.pointsClaimed) || 0);
     btn.disabled = !channel;
     btn.textContent = channel && wl.includes(channel) ? "Skip ads here again" : "Allow ads here";
   }
@@ -87,6 +89,7 @@
     $("enabled").addEventListener("change", (e) => save({ enabled: e.target.checked }).then(refresh));
     $("forcePopoutToken").addEventListener("change", (e) => save({ forcePopoutToken: e.target.checked }));
     $("showBanner").addEventListener("change", (e) => save({ showBanner: e.target.checked }));
+    $("autoClaimPoints").addEventListener("change", (e) => save({ autoClaimPoints: e.target.checked }));
     $("backupMode").addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-value]");
       if (btn) save({ backupMode: btn.dataset.value });

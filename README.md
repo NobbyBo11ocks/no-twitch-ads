@@ -81,6 +81,9 @@ In detail:
    prerolls on load), the mini-player-above-chat session is suppressed because
    it plays its own ads, Twitch's "ad in progress" overlays are hidden, the
    player keeps running in background tabs, and a stalled player is nudged.
+7. **Channel points.** A mutation observer watches for the bonus button that
+   Twitch adds under chat (the `claimable-bonus__icon` element) and clicks it
+   for you, so points accrue while you watch.
 
 Everything above was checked against the live site, not just the literature.
 `NOTICE.md` lists what was verified and when.
@@ -139,9 +142,11 @@ you an ad-free session and the extension stays idle.
 - **Master switch** in the header.
 - **Live status** for the current tab: watching, skipping (with the backup in
   use), or blanking.
-- **Skipped in this tab** counter.
+- **Breaks skipped** and **Points claimed** counters for the tab.
 - **Allow ads here** adds the current channel to an allow list, for streamers
   you want to support with ad revenue.
+- **Auto-claim channel points**: clicks the "Claim Bonus" button under chat
+  as soon as Twitch shows it, after a short randomised delay. On by default.
 - **If every backup stream has the ad**: `360p` (default) drops to the 360p
   session so video keeps playing; `Source` never drops quality and blanks the
   ad instead.

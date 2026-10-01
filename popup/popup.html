@@ -29,13 +29,17 @@
       </section>
 
       <section class="card channel">
-        <div class="stat">
+        <div class="stat chan">
           <span class="label">Channel</span>
           <span class="value mono" id="channel">—</span>
         </div>
-        <div class="stat">
-          <span class="label">Skipped in this tab</span>
+        <div class="stat num">
+          <span class="label">Breaks skipped</span>
           <span class="value" id="breaks">0</span>
+        </div>
+        <div class="stat num">
+          <span class="label">Points claimed</span>
+          <span class="value" id="points">0</span>
         </div>
         <button id="whitelist-toggle" class="btn ghost" type="button" disabled>Allow ads here</button>
       </section>
@@ -53,6 +57,14 @@
             <button type="button" role="radio" data-value="source" aria-checked="false">Source</button>
           </div>
         </div>
+
+        <label class="setting">
+          <div class="setting-text">
+            <span class="setting-title">Auto-claim channel points</span>
+            <span class="setting-desc">Clicks the bonus button under chat as soon as it appears.</span>
+          </div>
+          <span class="switch small"><input type="checkbox" id="autoClaimPoints" /><span class="track"><span class="thumb"></span></span></span>
+        </label>
 
         <label class="setting">
           <div class="setting-text">

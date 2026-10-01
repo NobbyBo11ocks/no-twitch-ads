@@ -16,7 +16,10 @@ All notable changes to this project are documented here. The format follows
 - HEVC (2K/4K) fallback to the closest AVC rendition during breaks.
 - Persisted-query hash for `PlaybackAccessToken` with a full-query fallback in
   case Twitch rotates the hash.
-- Popup: master switch, live per-tab status, per-channel allow list, fallback
-  mode (360p / Source), popout-token toggle, banner toggle.
+- Channel-points auto-claim: the "Claim Bonus" button under chat is clicked
+  automatically (language independent, keyed on Twitch's own markup).
+- Popup: master switch, live per-tab status, breaks skipped and points claimed
+  counters, per-channel allow list, fallback mode (360p / Source), auto-claim,
+  popout-token and banner toggles.
 - Offline checks (`npm test`) against captured playlists and a build script
   that produces Chrome and Firefox packages.
