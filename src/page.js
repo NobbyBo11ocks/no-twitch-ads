@@ -503,7 +503,9 @@
 
   function hookWorkerFetch() {
     console.log("[No Twitch Ads] worker fetch hooked");
-    const realFetch = self.fetch;
+    // Bind to the worker global, so passing realFetch around (e.g. into
+    // processM3U8) can never detach it and trigger "Illegal invocation".
+    const realFetch = self.fetch.bind(self);
     self.fetch = async function (url, options) {
       if (url instanceof URL) url = url.href;
       if (typeof url === "string") {
@@ -849,7 +851,10 @@
   }
 
   function hookFetch() {
-    const realFetch = window.fetch;
+    // Bound to window: this reference is called as a property of other objects
+    // (the worker fetch relay, debug helpers), and an unbound native fetch
+    // throws "Illegal invocation" when its receiver isn't the global.
+    const realFetch = window.fetch.bind(window);
     window.__noTwitchAds.realFetch = realFetch;
     window.fetch = function (url, init, ...args) {
       if (typeof url === "string" && url.includes("gql") && init) {
@@ -1232,7 +1237,7 @@
   // ------------------------------------------------------------------
   window.__noTwitchAds = {
     version: NTA_VERSION,
-    realFetch: window.fetch,
+    realFetch: window.fetch.bind(window),
     settings,
     getStatus: () => lastStatus,
     reloadPlayer: () => doTwitchPlayerTask(false, true),
