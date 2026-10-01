@@ -97,7 +97,7 @@ main {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 12px;
+  padding: 10px 12px;
 }
 
 h2 {
@@ -294,8 +294,12 @@ h2 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 9px 0;
+  padding: 8px 0;
   border-top: 1px solid var(--border);
+}
+
+.setting:last-child {
+  padding-bottom: 2px;
 }
 
 .setting:first-of-type {

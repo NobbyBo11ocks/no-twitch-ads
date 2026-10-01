@@ -9,7 +9,8 @@
     <title>popup preview</title>
     <style>
       html, body { margin: 0; background: #ff00ff; }
-      iframe { display: block; border: 0; width: 340px; height: 560px; margin: 0; }
+      /* 600px is Chrome's maximum popup height; the popup must fit without scrolling. */
+      iframe { display: block; border: 0; width: 340px; height: 600px; margin: 0; }
     </style>
   </head>
   <body>
