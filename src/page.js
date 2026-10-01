@@ -623,7 +623,14 @@
           const response = await realFetch(url, options);
           if (response.status !== 200) return response;
           const text = await response.text();
-          return new Response(await processM3U8(url, text, realFetch));
+          try {
+            return new Response(await processM3U8(url, text, realFetch));
+          } catch (err) {
+            // Never let a processing bug break playback: fall back to the
+            // original playlist (ads may show, but the stream keeps running).
+            console.log("[No Twitch Ads] playlist processing failed, serving original: " + err);
+            return new Response(text);
+          }
         }
       }
       return realFetch.apply(this, arguments);

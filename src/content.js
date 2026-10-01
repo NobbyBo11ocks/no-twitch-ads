@@ -74,7 +74,7 @@
   // and fall back to the English label.
   const CLAIM_SELECTORS = ['.claimable-bonus__icon', 'button[aria-label="Claim Bonus"]', '[data-test-selector="community-points-summary"] button[aria-label*="onus"]'];
   const clicked = new WeakSet();
-  let claimTimer = null;
+  let claimPending = false;
 
   function findClaimButton() {
     for (const selector of CLAIM_SELECTORS) {
@@ -86,36 +86,27 @@
     return null;
   }
 
-  function scheduleClaim() {
-    if (!settings.autoClaimPoints || claimTimer) return;
-    // Let the button finish rendering, and keep the click rhythm human-ish.
-    claimTimer = setTimeout(() => {
-      claimTimer = null;
-      const button = findClaimButton();
-      if (!button) return;
+  // A bonus appears roughly every 15 minutes and lingers for minutes before it
+  // expires, so a light 3 s poll is plenty and avoids observing Twitch's very
+  // busy chat subtree. When one is found we click after a short, randomised
+  // delay (keeps the rhythm human and lets the button finish rendering).
+  function pollClaim() {
+    if (!settings.autoClaimPoints || claimPending) return;
+    const button = findClaimButton();
+    if (!button) return;
+    claimPending = true;
+    setTimeout(() => {
+      claimPending = false;
+      if (!settings.autoClaimPoints || !button.isConnected || clicked.has(button)) return;
       clicked.add(button);
       try {
         button.click();
         pointsClaimed++;
         console.log("[No Twitch Ads] claimed channel points bonus (" + pointsClaimed + " this tab)");
       } catch (_) {}
-    }, 700 + Math.floor(Math.random() * 900));
+    }, 600 + Math.floor(Math.random() * 1200));
   }
-
-  const observer = new MutationObserver((mutations) => {
-    if (!settings.autoClaimPoints) return;
-    for (const mutation of mutations) {
-      if (mutation.addedNodes.length) {
-        scheduleClaim();
-        return;
-      }
-    }
-  });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-  // Safety net in case a mutation is missed (e.g. the button re-renders in place).
-  setInterval(() => {
-    if (settings.autoClaimPoints && findClaimButton()) scheduleClaim();
-  }, 15000);
+  setInterval(pollClaim, 3000);
 
   // ---------------------------------------------------------------
   // Popup queries
