@@ -1,6 +1,6 @@
 {
   "name": "no-twitch-ads",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Browser extension that skips Twitch's server-side stitched video ads on live streams.",
   "private": true,
   "license": "GPL-3.0-only",

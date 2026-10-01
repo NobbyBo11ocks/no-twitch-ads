@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.3] - 2026-10-01
+
+### Added
+
+- Auto-quality (anti-downgrade): the extension remembers the quality you are
+  watching and restores it through the player API if a break-end reload drops
+  it. It respects Auto mode and never forces a quality you did not pick.
+  Verified live: 1440p → dropped to 720p → restored to 1440p.
+- Release workflow: pushing a `vX.Y.Z` tag builds the Chrome and Firefox zips
+  and publishes them on a GitHub Release automatically.
+
 ## [1.0.2] - 2026-10-01
 
 ### Added

@@ -92,6 +92,10 @@ In detail:
    warns in the console and counts it, so a future Twitch change can't fail
    silently. If processing throws, the original playlist is served so the stream
    never hangs on a bug.
+9. **Auto-quality.** It remembers the quality you are watching and restores it
+   through the player API if a break-end reload drops it, so Twitch can't
+   quietly downgrade you. Auto mode is respected and your quality is never
+   forced higher than you chose.
 
 Everything above was checked against the live site, not just the literature.
 `NOTICE.md` lists what was verified and when.

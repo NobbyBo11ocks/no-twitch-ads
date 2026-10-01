@@ -764,6 +764,12 @@
   const PlayerBufferingMinRepeatDelay = 8000;
   const PlayerBufferingPrerollCheckEnabled = false;
   const PlayerBufferingPrerollCheckOffset = 5;
+  // Auto-quality (anti-downgrade): remember the quality you are actually
+  // watching and, if a break-end reload drops it, restore it via the player
+  // API. Respects Auto mode and never forces a quality you did not choose.
+  const AutoQualityRestore = true;
+  let preferredQualityGroup = null;
+  let restoreQualityUntil = 0;
 
   function postTwitchWorkerMessage(key, value) {
     twitchWorkers.forEach((worker) => {
@@ -1045,6 +1051,8 @@
       playerState.setSrc({ isNewMediaPlayerInstance: true, refreshAccessToken: true });
       postTwitchWorkerMessage("TriggeredPlayerReload");
       player.play();
+      // Watch for a few seconds after the reload and restore quality if it dropped.
+      restoreQualityUntil = Date.now() + 12000;
       if (localStorageHookFailed && (currentQualityLS || currentMutedLS || currentVolumeLS)) {
         setTimeout(() => {
           try {
@@ -1085,6 +1093,27 @@
           }
           if (player.getState() === "Playing") {
             playerBufferState.hasStreamStarted = true;
+          }
+          if (AutoQualityRestore && player.getQuality && player.getQualities && player.setQuality) {
+            const auto = player.core?.state?.autoQualityMode;
+            const q = player.getQuality();
+            if (player.getState() === "Playing" && !auto && q && q.group) {
+              if (restoreQualityUntil && Date.now() < restoreQualityUntil) {
+                if (preferredQualityGroup && q.group !== preferredQualityGroup) {
+                  const target = player.getQualities().find((x) => x.group === preferredQualityGroup);
+                  if (target) {
+                    console.log(LOG, "restoring quality " + q.group + " -> " + preferredQualityGroup + " after reload");
+                    player.setQuality(target);
+                  }
+                  restoreQualityUntil = 0;
+                } else if (preferredQualityGroup) {
+                  restoreQualityUntil = 0; // already at the preferred quality
+                }
+              } else {
+                // Steady state: remember what the viewer is watching.
+                preferredQualityGroup = q.group;
+              }
+            }
           }
           const position = player.core?.state?.position;
           const bufferedPosition = player.core?.state?.bufferedPosition;
