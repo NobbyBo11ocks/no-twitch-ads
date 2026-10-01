@@ -1,0 +1,24 @@
+{
+  "name": "no-twitch-ads",
+  "version": "1.0.0",
+  "description": "Browser extension that skips Twitch's server-side stitched video ads on live streams.",
+  "private": true,
+  "license": "GPL-3.0-only",
+  "author": "NobbyBo11ocks",
+  "homepage": "https://github.com/NobbyBo11ocks/no-twitch-ads#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NobbyBo11ocks/no-twitch-ads.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NobbyBo11ocks/no-twitch-ads/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node tools/check.js",
+    "build": "node tools/build.js",
+    "lint": "node --check src/page.js && node --check src/content.js && node --check src/background.js && node --check popup/popup.js && node --check tools/check.js && node --check tools/build.js"
+  }
+}

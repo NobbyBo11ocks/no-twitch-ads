@@ -1,0 +1,13 @@
+# build output
+dist/
+*.zip
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# node (no runtime deps; kept for tooling)
+node_modules/
+npm-debug.log*

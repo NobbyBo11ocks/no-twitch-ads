@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "No Twitch Ads",
+  "version": "1.0.0",
+  "description": "Skips Twitch's server-side stitched video ads by feeding the player an ad-free backup stream during ad breaks.",
+  "author": "NobbyBo11ocks",
+  "homepage_url": "https://github.com/NobbyBo11ocks/no-twitch-ads",
+  "minimum_chrome_version": "111",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "No Twitch Ads",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.twitch.tv/*"
+      ],
+      "js": [
+        "src/page.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "*://*.twitch.tv/*"
+      ],
+      "js": [
+        "src/content.js"
+      ],
+      "css": [
+        "src/content.css"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}

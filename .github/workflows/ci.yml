@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: Syntax, offline checks, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Syntax check every script
+        run: npm run lint
+      - name: Offline playlist checks
+        run: npm test
+      - name: Build Chrome and Firefox packages
+        run: npm run build
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: no-twitch-ads-packages
+          path: dist/*.zip
+          if-no-files-found: error

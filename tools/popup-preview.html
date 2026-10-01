@@ -1,0 +1,16 @@
+<!doctype html>
+<!-- Dev helper: renders the popup at its real size on a magenta backdrop so a
+     screenshot can be cropped automatically (see tools/screenshot-popup.ps1). -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>popup preview</title>
+    <style>
+      html, body { margin: 0; background: #ff00ff; }
+      iframe { display: block; border: 0; width: 340px; height: 560px; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <iframe src="../popup/popup.html" title="popup"></iframe>
+  </body>
+</html>

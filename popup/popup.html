@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="dark light" />
+    <title>No Twitch Ads</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="header">
+      <img class="logo" src="../icons/icon48.png" alt="" width="28" height="28" />
+      <div class="title">
+        <h1>No Twitch Ads</h1>
+        <span class="version" id="version"></span>
+      </div>
+      <label class="switch" title="Ad skipping on or off">
+        <input type="checkbox" id="enabled" aria-label="Ad skipping" />
+        <span class="track"><span class="thumb"></span></span>
+      </label>
+    </header>
+
+    <main>
+      <section class="card status" id="status" data-state="loading" aria-live="polite">
+        <div class="indicator" aria-hidden="true"><span class="ring"></span><span class="dot"></span></div>
+        <div class="status-text">
+          <div class="status-title" id="status-title">Checking…</div>
+          <div class="status-detail" id="status-detail"></div>
+        </div>
+      </section>
+
+      <section class="card channel">
+        <div class="stat">
+          <span class="label">Channel</span>
+          <span class="value mono" id="channel">—</span>
+        </div>
+        <div class="stat">
+          <span class="label">Skipped in this tab</span>
+          <span class="value" id="breaks">0</span>
+        </div>
+        <button id="whitelist-toggle" class="btn ghost" type="button" disabled>Allow ads here</button>
+      </section>
+
+      <section class="card settings">
+        <h2>Settings</h2>
+
+        <div class="setting">
+          <div class="setting-text">
+            <span class="setting-title">If every backup stream has the ad</span>
+            <span class="setting-desc">360p keeps video playing at low quality. Source keeps your quality and blanks the ad instead.</span>
+          </div>
+          <div class="segmented" role="radiogroup" aria-label="Fallback" id="backupMode">
+            <button type="button" role="radio" data-value="360p" aria-checked="false">360p</button>
+            <button type="button" role="radio" data-value="source" aria-checked="false">Source</button>
+          </div>
+        </div>
+
+        <label class="setting">
+          <div class="setting-text">
+            <span class="setting-title">Request stream as a popout player</span>
+            <span class="setting-desc">Fewer prerolls on load. Turn off if a stream refuses to start.</span>
+          </div>
+          <span class="switch small"><input type="checkbox" id="forcePopoutToken" /><span class="track"><span class="thumb"></span></span></span>
+        </label>
+
+        <label class="setting">
+          <div class="setting-text">
+            <span class="setting-title">Show banner on the player during a break</span>
+          </div>
+          <span class="switch small"><input type="checkbox" id="showBanner" /><span class="track"><span class="thumb"></span></span></span>
+        </label>
+      </section>
+    </main>
+
+    <footer>
+      <a id="link-repo" href="https://github.com/NobbyBo11ocks/no-twitch-ads" target="_blank" rel="noopener">GitHub</a>
+      <span class="sep" aria-hidden="true">·</span>
+      <a id="link-issues" href="https://github.com/NobbyBo11ocks/no-twitch-ads/issues" target="_blank" rel="noopener">Report a problem</a>
+      <span class="grow"></span>
+      <span class="hint">Live streams only</span>
+    </footer>
+    <script src="popup.js"></script>
+  </body>
+</html>

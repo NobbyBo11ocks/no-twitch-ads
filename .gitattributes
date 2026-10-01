@@ -1,0 +1,4 @@
+# Normalize line endings: LF in the repository, LF on checkout everywhere.
+* text=auto eol=lf
+*.png binary
+*.zip binary

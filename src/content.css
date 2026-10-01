@@ -1,0 +1,9 @@
+/* Hide Twitch's own "ad in progress" chrome. The video ad itself is handled by
+   src/page.js; these rules only remove the countdown/label overlays that Twitch
+   draws while it *thinks* an ad is playing. */
+[data-a-target="video-ad-label"],
+div:has(> [data-a-target="video-ad-label"]),
+[data-a-target="video-ad-countdown"],
+[data-test-selector="ad-banner-default-text"] {
+  display: none !important;
+}
