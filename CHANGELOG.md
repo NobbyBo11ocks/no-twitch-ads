@@ -4,6 +4,29 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-10-01
+
+### Added
+
+- Lifetime stats in the popup: ads skipped, points claimed, and estimated time
+  saved, persisted in `storage.local` and shown across tabs.
+- Leak detection: the worker checks the final playlist for an ad segment that
+  would actually play (a non-`,live` segment that was not blanked), warns in the
+  console, and counts it. Verified by unit tests that a clean playlist and a
+  blanked playlist report no leak while a raw ad playlist does.
+
+### Changed
+
+- Playback is now fail-safe: if playlist processing throws, the original
+  playlist is served so the stream keeps running instead of hanging.
+- Auto-claim uses a light 3 s poll instead of observing Twitch's whole DOM.
+
+### Notes
+
+- No recovery watchdog was added: measured live, the player returns to Playing
+  within about a second of a break ending, so a second watchdog would be
+  redundant and risk double-reloads.
+
 ## [1.0.1] - 2026-10-01
 
 ### Fixed

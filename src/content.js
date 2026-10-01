@@ -21,6 +21,40 @@
   let pointsClaimed = 0;
 
   // ---------------------------------------------------------------
+  // Lifetime stats (persisted in storage.local; read by the popup).
+  //   adsSkipped   - ad breaks skipped
+  //   pointsClaimed- channel-point bonuses auto-claimed
+  //   timeSavedMs  - summed break durations (ad time you did not watch)
+  //   blanked      - breaks where every backup had the ad, so segments blanked
+  //   leaks        - breaks where a real ad segment reached the player
+  // ---------------------------------------------------------------
+  const STATS_DEFAULTS = { adsSkipped: 0, pointsClaimed: 0, timeSavedMs: 0, blanked: 0, leaks: 0 };
+  const stats = { ...STATS_DEFAULTS };
+  let statsLoaded = false;
+  let statsSaveTimer = null;
+  let breakStart = 0;
+  let breakWasBlanked = false;
+  let breakWasLeaked = false;
+
+  async function loadStats() {
+    try {
+      const got = await api.storage.local.get({ stats: STATS_DEFAULTS });
+      Object.assign(stats, STATS_DEFAULTS, got.stats || {});
+    } catch (_) {}
+    statsLoaded = true;
+  }
+
+  function saveStatsSoon() {
+    if (statsSaveTimer) return;
+    statsSaveTimer = setTimeout(() => {
+      statsSaveTimer = null;
+      try {
+        api.storage.local.set({ stats });
+      } catch (_) {}
+    }, 1500);
+  }
+
+  // ---------------------------------------------------------------
   // Settings bridge
   // ---------------------------------------------------------------
   function pushSettings(stored) {
@@ -41,6 +75,7 @@
   // and we also push proactively in case it already ran.
   document.addEventListener("nta:request-settings", loadAndPush);
   loadAndPush();
+  loadStats();
 
   api.storage.onChanged.addListener((changes, area) => {
     if (area !== "sync") return;
@@ -57,7 +92,30 @@
     } catch (_) {
       return;
     }
-    if (next.hasAds && !lastStatus.hasAds) breaks++;
+    const rising = next.hasAds && !lastStatus.hasAds;
+    const falling = !next.hasAds && lastStatus.hasAds;
+    if (rising) {
+      breaks++;
+      breakStart = Date.now();
+      breakWasBlanked = false;
+      breakWasLeaked = false;
+      stats.adsSkipped++;
+      saveStatsSoon();
+    }
+    if (next.hasAds) {
+      if (next.stripping) breakWasBlanked = true;
+      if (next.leaked) breakWasLeaked = true;
+    }
+    if (falling) {
+      if (breakStart) {
+        // Cap a single break's contribution so a stuck timer can't inflate it.
+        stats.timeSavedMs += Math.min(Date.now() - breakStart, 5 * 60 * 1000);
+        breakStart = 0;
+      }
+      if (breakWasBlanked) stats.blanked++;
+      if (breakWasLeaked) stats.leaks++;
+      saveStatsSoon();
+    }
     lastStatus = next;
     try {
       api.runtime.sendMessage({ type: "nta:status", ...lastStatus });
@@ -102,6 +160,8 @@
       try {
         button.click();
         pointsClaimed++;
+        stats.pointsClaimed++;
+        saveStatsSoon();
         console.log("[No Twitch Ads] claimed channel points bonus (" + pointsClaimed + " this tab)");
       } catch (_) {}
     }, 600 + Math.floor(Math.random() * 1200));
@@ -129,7 +189,7 @@
   api.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!message || message.type !== "nta:get-status") return;
     if (window !== window.top) return; // only the top frame answers
-    sendResponse({ status: lastStatus, channel: channelFromLocation(), breaks, pointsClaimed });
+    sendResponse({ status: lastStatus, channel: channelFromLocation(), breaks, pointsClaimed, stats: statsLoaded ? stats : null });
     return true;
   });
 })();

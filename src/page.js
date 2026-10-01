@@ -355,6 +355,7 @@
       streamInfo.LastPlayerReload = Date.now();
     }
     const haveAdTags = textStr.includes(AdSignifier) || SimulatedAdsDepth > 0;
+    let adLeaked = false;
     if (haveAdTags) {
       streamInfo.IsMidroll = textStr.includes('"MIDROLL"') || textStr.includes('"midroll"');
       if (!streamInfo.IsShowingAd) {
@@ -476,6 +477,15 @@
       if (IsAdStrippingEnabled || stripHevc) {
         textStr = stripAdSegments(textStr, stripHevc, streamInfo);
       }
+      // Leak check: is a real ad segment about to reach the player? A leaked
+      // segment is a non-",live" #EXTINF whose URL was NOT blanked (not in the
+      // ad-segment cache). With a clean backup there are none; when blanking,
+      // all are cached. Anything left means an ad would actually play.
+      adLeaked = hasUnblankedAdSegment(textStr);
+      if (adLeaked && !streamInfo.LeakReported) {
+        streamInfo.LeakReported = true;
+        console.warn("[No Twitch Ads] ad segment leaked to the player on " + streamInfo.ChannelName + " — backups and stripping did not cover this break");
+      }
     } else if (streamInfo.IsShowingAd) {
       console.log("[No Twitch Ads] ad break over");
       const wasStrippingAdSegments = streamInfo.IsStrippingAdSegments;
@@ -483,6 +493,7 @@
       streamInfo.IsStrippingAdSegments = false;
       streamInfo.NumStrippedAdSegments = 0;
       streamInfo.ActiveBackupPlayerType = null;
+      streamInfo.LeakReported = false;
       if (streamInfo.IsUsingModifiedM3U8 || ReloadPlayerAfterAd || wasStrippingAdSegments) {
         streamInfo.IsUsingModifiedM3U8 = false;
         streamInfo.LastPlayerReload = Date.now();
@@ -498,8 +509,22 @@
       isStrippingAdSegments: streamInfo.IsStrippingAdSegments,
       numStrippedAdSegments: streamInfo.NumStrippedAdSegments,
       backupPlayerType: streamInfo.ActiveBackupPlayerType,
+      leaked: adLeaked,
     });
     return textStr;
+  }
+
+  // True if the playlist still contains an ad segment that would actually play:
+  // a non-",live" #EXTINF whose segment URL is not in the blanked-segment cache.
+  function hasUnblankedAdSegment(textStr) {
+    const lines = textStr.replaceAll("\r", "").split("\n");
+    for (let i = 0; i < lines.length - 1; i++) {
+      if (lines[i].startsWith("#EXTINF") && !lines[i].includes(",live")) {
+        const seg = lines[i + 1];
+        if (seg && !seg.startsWith("#") && !AdSegmentCache.has(seg)) return true;
+      }
+    }
+    return false;
   }
 
   function hookWorkerFetch() {
@@ -700,6 +725,7 @@
     replaceServerTimeInM3u8,
     stripAdSegments,
     getStreamUrlForResolution,
+    hasUnblankedAdSegment,
     gqlRequest,
     getAccessToken,
     processM3U8,
@@ -1125,6 +1151,7 @@
       stripping: !!data.isStrippingAdSegments,
       midroll: !!data.isMidroll,
       backup: data.backupPlayerType || null,
+      leaked: !!data.leaked,
       channel: getChannelFromUrl(),
     };
     if (JSON.stringify(status) !== JSON.stringify(lastStatus)) dispatchStatus(status);
@@ -1253,7 +1280,7 @@
     // backup session at that depth (1 = embed, 2 = popout, 3 = 360p). 0 = off.
     simulateAds: (depth) => postTwitchWorkerMessage("SimulateAds", Math.max(0, depth | 0)),
     allSegmentsAreAdSegments: () => postTwitchWorkerMessage("AllSegmentsAreAdSegments"),
-    _internal: { declareOptions, parseAttributes, getServerTimeFromM3u8, replaceServerTimeInM3u8, stripAdSegments, getStreamUrlForResolution, processM3U8, buildWorkerPrelude, getChannelFromUrl },
+    _internal: { declareOptions, parseAttributes, getServerTimeFromM3u8, replaceServerTimeInM3u8, stripAdSegments, getStreamUrlForResolution, hasUnblankedAdSegment, processM3U8, buildWorkerPrelude, getChannelFromUrl },
   };
 
   hookWindowWorker();

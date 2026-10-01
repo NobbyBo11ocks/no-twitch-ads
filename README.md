@@ -84,9 +84,14 @@ In detail:
    content-classification disclosure ("Intended for certain audiences") are
    hidden, the player keeps running in background tabs, and a stalled player is
    nudged.
-7. **Channel points.** A mutation observer watches for the bonus button that
-   Twitch adds under chat (the `claimable-bonus__icon` element) and clicks it
-   for you, so points accrue while you watch.
+7. **Channel points.** A light poll watches for the bonus button Twitch adds
+   under chat (the `claimable-bonus__icon` element) and clicks it for you, so
+   points accrue while you watch.
+8. **Leak check.** After producing the playlist the player will consume, the
+   worker verifies no ad segment slipped through unblanked. If one ever does it
+   warns in the console and counts it, so a future Twitch change can't fail
+   silently. If processing throws, the original playlist is served so the stream
+   never hangs on a bug.
 
 Everything above was checked against the live site, not just the literature.
 `NOTICE.md` lists what was verified and when.
@@ -142,12 +147,13 @@ you an ad-free session and the extension stays idle.
 
 ## The popup
 
-<p align="center"><img src="assets/popup.png" alt="Popup" width="287"></p>
+<p align="center"><img src="assets/popup.png" alt="Popup" width="280"></p>
 
 Deliberately minimal:
 
 - **Master switch** in the header turns ad skipping on or off.
-- **Ads skipped** and **Points claimed** counters for the current tab.
+- **Lifetime stats**: ads skipped, points claimed, and estimated time saved,
+  persisted across tabs and sessions.
 - **Auto-claim channel points**: clicks the "Claim Bonus" button under chat as
   soon as Twitch shows it, after a short randomised delay. On by default.
 

@@ -196,6 +196,19 @@ test("stripAdSegments marks ad segments, keeps live ones, drops prefetch, neuter
   assert(out.includes("#EXT-X-DISCONTINUITY"), "discontinuity marker must survive");
 });
 
+test("hasUnblankedAdSegment: clean live playlist has no leak", () => {
+  assert.strictEqual(I.hasUnblankedAdSegment(liveMedia), false);
+});
+
+test("hasUnblankedAdSegment: raw ad playlist is a leak until its segments are blanked", () => {
+  // A fresh ad playlist whose ad segments are not yet cached counts as a leak.
+  sandbox.AdSegmentCache.clear();
+  assert.strictEqual(I.hasUnblankedAdSegment(adMedia), true);
+  // After stripping caches the ad segments, the same playlist no longer leaks.
+  I.stripAdSegments(adMedia, false, { NumStrippedAdSegments: 0, IsStrippingAdSegments: false });
+  assert.strictEqual(I.hasUnblankedAdSegment(adMedia), false);
+});
+
 test("processM3U8: unknown playlist passes through", async () => {
   const out = await I.processM3U8("https://nowhere/x.m3u8", adMedia, async () => ({ status: 404 }));
   assert.strictEqual(out, adMedia);
