@@ -1,19 +1,49 @@
 <!doctype html>
-<!-- Dev helper: renders the popup at its real size on a magenta backdrop so a
-     screenshot can be cropped to the popup automatically (crop to the
-     non-magenta bounding box). Serve the repo with `node tools/serve.js` and
-     open http://127.0.0.1:8765/tools/popup-preview.html -->
+<!-- Dev helper: renders popup/popup.html at its real width with a stubbed
+     chrome.* API so every state can be checked without installing anything.
+     Serve the repo with `node tools/serve.js`, then open
+       http://127.0.0.1:8765/tools/popup-preview.html?state=default
+     state = default | empty | off | busy   (add &h=NNN to change height)
+     The magenta backdrop lets a screenshot be cropped to the popup. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <title>popup preview</title>
     <style>
       html, body { margin: 0; background: #ff00ff; }
-      /* Chrome caps popup height at 600px; this popup is well under that. */
-      iframe { display: block; border: 0; width: 300px; height: 440px; margin: 0; }
+      iframe { display: block; border: 0; width: 240px; margin: 0; }
     </style>
   </head>
   <body>
-    <iframe src="../popup/popup.html" title="popup"></iframe>
+    <iframe id="frame" title="popup"></iframe>
+    <script>
+      const zero = { adsSkipped: 0, pointsClaimed: 0, timeSavedMs: 0, blanked: 0, leaks: 0 };
+      const STATES = {
+        default: { enabled: true, autoClaimPoints: true, stats: { adsSkipped: 4, pointsClaimed: 3, timeSavedMs: 312000, blanked: 1, leaks: 0 } },
+        empty: { enabled: true, autoClaimPoints: true, stats: zero },
+        off: { enabled: false, autoClaimPoints: false, stats: { adsSkipped: 4, pointsClaimed: 3, timeSavedMs: 312000, blanked: 1, leaks: 0 } },
+        busy: { enabled: true, autoClaimPoints: true, stats: { adsSkipped: 12840, pointsClaimed: 3421, timeSavedMs: 412200000, blanked: 37, leaks: 0 } },
+      };
+      const params = new URLSearchParams(location.search);
+      const state = STATES[params.get("state")] || STATES.default;
+      const stub = `<script>
+        const S = ${JSON.stringify(state)};
+        window.chrome = {
+          storage: {
+            sync: { get: async (d) => ({ ...d, enabled: S.enabled, autoClaimPoints: S.autoClaimPoints }), set: async () => {} },
+            local: { get: async () => ({ stats: S.stats }) },
+            onChanged: { addListener() {} },
+          },
+          runtime: { getManifest: () => ({ version: "1.0.4" }) },
+        };
+      <\/script>`;
+      fetch("../popup/popup.html")
+        .then((r) => r.text())
+        .then((html) => {
+          const frame = document.getElementById("frame");
+          frame.style.height = (params.get("h") || 190) + "px";
+          frame.srcdoc = html.replace("<head>", '<head><base href="../popup/" />' + stub);
+        });
+    </script>
   </body>
 </html>

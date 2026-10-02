@@ -8,33 +8,33 @@
   </head>
   <body>
     <header class="hdr">
-      <img class="logo" src="../icons/icon48.png" alt="" width="24" height="24" />
+      <img class="logo" src="../icons/icon48.png" alt="" width="20" height="20" />
       <h1>No Twitch Ads</h1>
       <span class="ver" id="version"></span>
       <label class="tgl" title="Ad skipping on or off">
-        <input type="checkbox" id="enabled" aria-label="Ad skipping" />
+        <input type="checkbox" id="enabled" role="switch" aria-label="Ad skipping" />
         <span class="tglt"></span>
       </label>
     </header>
 
     <div class="stats">
-      <div class="row">
+      <div class="row" title="Ad breaks replaced with a clean stream">
         <span class="k">Ads skipped</span>
         <span class="v" id="adsSkipped">0</span>
       </div>
-      <div class="row">
+      <div class="row" title="Channel points earned from the bonuses claimed for you">
         <span class="k">Points claimed</span>
         <span class="v" id="pointsClaimed">0</span>
       </div>
-      <div class="row">
+      <div class="row" title="Ad time you did not have to watch">
         <span class="k">Time saved</span>
-        <span class="v" id="timeSaved">0m</span>
+        <span class="v" id="timeSaved">0s</span>
       </div>
     </div>
 
     <label class="opt">
       <span class="o-title">Auto-claim channel points</span>
-      <span class="tgl"><input type="checkbox" id="autoClaimPoints" /><span class="tglt"></span></span>
+      <span class="tgl"><input type="checkbox" id="autoClaimPoints" role="switch" aria-label="Auto-claim channel points" /><span class="tglt"></span></span>
     </label>
 
     <footer>

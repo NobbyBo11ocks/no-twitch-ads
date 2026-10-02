@@ -4,6 +4,35 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.4] - 2026-10-02
+
+### Fixed
+
+- The claim counter counted clicks, not claims: a click Twitch ignored still
+  bumped it. A claim now counts only after Twitch's own reply to the claim
+  request says it was accepted; a refused claim (already taken in another tab
+  or on another device) is not counted.
+- Lifetime stats could be lost or rolled back when more than one Twitch tab was
+  open, because every tab saved its own copy of the whole stats object. Only
+  the background script writes stats now; tabs send increments, applied one at
+  a time. Stats are also no longer held back for 1.5 s before saving.
+
+### Changed
+
+- "Points claimed" now shows the total channel points earned from auto-claims,
+  using the exact amount Twitch reports for each claim. Claims recorded before
+  this version had no value and are credited at the standard 50 points each.
+- Popup restyled to be compact and flat (240 px wide) in Twitch's own colours
+  and typography, with a light theme. Time saved is shown to the second.
+
+### Notes
+
+- If Twitch's claim reply is ever not seen but the bonus button is gone, the
+  claim is still counted, with 0 points, and the console says "value unknown".
+- `npm test` now also runs `tools/check-stats.js`, a virtual-clock harness that
+  drives several simulated tabs against the real content and background
+  scripts. `tools/popup-preview.html` previews the popup in any state.
+
 ## [1.0.3] - 2026-10-01
 
 ### Added

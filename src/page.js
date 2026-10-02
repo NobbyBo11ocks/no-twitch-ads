@@ -890,6 +890,29 @@
     return undefined;
   }
 
+  // Reports Twitch's own answer to a "Claim Bonus" click to the content script
+  // (src/content.js). That reply is the authoritative record of a claim: it says
+  // whether Twitch accepted it and exactly how many points it was worth.
+  function relayClaimResult(response) {
+    Promise.resolve(response)
+      .then((res) => res.clone().json())
+      .then((json) => {
+        for (const entry of Array.isArray(json) ? json : [json]) {
+          const payload = entry && entry.data && entry.data.claimCommunityPoints;
+          if (!payload) continue;
+          const claim = payload.claim || {};
+          const detail = {
+            claimId: claim.id || null,
+            points: Number(claim.pointsEarnedTotal) || 0,
+            balance: Number(payload.currentPoints) || 0,
+            error: payload.error ? payload.error.code || "ERROR" : null,
+          };
+          document.dispatchEvent(new CustomEvent("nta:claim-result", { detail: JSON.stringify(detail) }));
+        }
+      })
+      .catch(() => {});
+  }
+
   function hookFetch() {
     // Bound to window: this reference is called as a property of other objects
     // (the worker fetch relay, debug helpers), and an unbound native fetch
@@ -945,7 +968,11 @@
           }
         }
       }
-      return realFetch.call(this, url, init, ...args);
+      const response = realFetch.call(this, url, init, ...args);
+      if (init && typeof init.body === "string" && typeof url === "string" && url.includes("gql") && init.body.includes("ClaimCommunityPoints")) {
+        relayClaimResult(response);
+      }
+      return response;
     };
   }
 

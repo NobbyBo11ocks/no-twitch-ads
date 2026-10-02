@@ -15,10 +15,12 @@ assert(!source.includes("__BLANK_MP4_B64__"), "blank MP4 placeholder was not rep
 
 // ---- minimal browser-ish sandbox ----
 const listeners = {};
+const dispatched = []; // CustomEvents page.js sends to the content script
+let nextFetchResponse = null; // lets a test stand in for Twitch's reply
 const document = {
   readyState: "loading",
   addEventListener: (name, fn) => ((listeners[name] = listeners[name] || []).push(fn)),
-  dispatchEvent: () => true,
+  dispatchEvent: (event) => (dispatched.push(event), true),
   querySelector: () => null,
   __lookupGetter__: () => undefined,
 };
@@ -29,7 +31,7 @@ class FakeWorker {
 }
 const window = {
   Worker: FakeWorker,
-  fetch: async () => ({ status: 200, text: async () => "", headers: new Map() }),
+  fetch: async () => nextFetchResponse || { status: 200, text: async () => "", headers: new Map() },
   addEventListener: () => {},
   location: { href: "https://www.twitch.tv/faide" },
 };
@@ -283,6 +285,49 @@ test("getChannelFromUrl handles normal, popout, moderator and non-channel paths"
   window.location.href = "https://player.twitch.tv/?channel=Faide&parent=x"; assert.strictEqual(g(), "faide");
 });
 
+// Captured live 2026-10-02 on twitch.tv/Mammoth: the reply to a Claim Bonus click.
+const claimReply = (claimCommunityPoints) => ({ status: 200, clone() { return this; }, json: async () => [{ data: { claimCommunityPoints } }] });
+const claimRequest = JSON.stringify([{ operationName: "ClaimCommunityPoints", variables: { input: { channelID: "65425478", claimID: "1cceedfe" } } }]);
+const claimEvents = () => dispatched.filter((e) => e.type === "nta:claim-result").map((e) => JSON.parse(e.detail));
+const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+(async () => {
+  try {
+    dispatched.length = 0;
+    nextFetchResponse = claimReply({ claim: { id: "1cceedfe", multipliers: [], pointsEarnedBaseline: 50, pointsEarnedTotal: 50 }, currentPoints: 160, error: null });
+    await window.fetch("https://gql.twitch.tv/gql", { method: "POST", body: claimRequest });
+    await settle();
+    assert.deepStrictEqual(claimEvents(), [{ claimId: "1cceedfe", points: 50, balance: 160, error: null }]);
+
+    dispatched.length = 0;
+    nextFetchResponse = claimReply({ claim: null, currentPoints: 0, error: { code: "CLAIM_ALREADY_CLAIMED" } });
+    await window.fetch("https://gql.twitch.tv/gql", { method: "POST", body: claimRequest });
+    await settle();
+    assert.deepStrictEqual(claimEvents(), [{ claimId: null, points: 0, balance: 0, error: "CLAIM_ALREADY_CLAIMED" }]);
+
+    // Other GQL traffic, and non-GQL URLs, must never produce a claim event.
+    dispatched.length = 0;
+    nextFetchResponse = claimReply({ claim: { id: "x", pointsEarnedTotal: 50 }, currentPoints: 1, error: null });
+    await window.fetch("https://gql.twitch.tv/gql", { method: "POST", body: JSON.stringify([{ operationName: "ChannelPointsContext" }]) });
+    await window.fetch("https://example.com/other", { method: "POST", body: claimRequest });
+    await settle();
+    assert.deepStrictEqual(claimEvents(), []);
+
+    // A reply that is not JSON must not break the page's own request.
+    nextFetchResponse = { status: 200, clone() { return this; }, json: async () => { throw new Error("not json"); } };
+    const res = await window.fetch("https://gql.twitch.tv/gql", { method: "POST", body: claimRequest });
+    assert.strictEqual(res.status, 200);
+    passed++;
+    console.log("ok   - claim relay reports Twitch's claim reply (accepted, refused) and ignores everything else");
+  } catch (err) {
+    console.log("FAIL - claim relay");
+    console.log("      ", err.message);
+    process.exitCode = 1;
+  } finally {
+    nextFetchResponse = null;
+  }
+})();
+
 setTimeout(() => {
   console.log(process.exitCode ? "\nSome checks FAILED" : "\nAll checks passed");
-}, 50);
+}, 150);

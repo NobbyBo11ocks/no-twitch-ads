@@ -2,31 +2,53 @@
 // Copyright (C) 2026 No Twitch Ads contributors. See LICENSE and NOTICE.md.
 
 (() => {
-  const api = typeof browser !== "undefined" ? browser : chrome;
+  const api = typeof browser !== "undefined" ? browser : typeof chrome !== "undefined" ? chrome : null;
   const DEFAULTS = { enabled: true, autoClaimPoints: true };
-  const STATS_DEFAULTS = { adsSkipped: 0, pointsClaimed: 0, timeSavedMs: 0, blanked: 0, leaks: 0 };
+  const STATS_DEFAULTS = { adsSkipped: 0, pointsClaimed: 0, pointsEarned: 0, timeSavedMs: 0, blanked: 0, leaks: 0 };
+  // Claims counted before points were recorded had no value; they are credited at
+  // Twitch's standard 50-point bonus (src/background.js does the same on write).
+  const LEGACY_BONUS_POINTS = 50;
 
   const $ = (id) => document.getElementById(id);
   let settings = { ...DEFAULTS };
+  let firstRender = true;
 
+  const count = (value) => (Number.isFinite(value) && value > 0 ? Math.floor(value) : 0);
+
+  // 42s, 5m 12s, 1h 05m: exact enough that one short break still shows up.
   function fmtDuration(ms) {
-    const mins = Math.round(ms / 60000);
-    if (mins < 60) return mins + "m";
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return m ? h + "h " + m + "m" : h + "h";
+    const total = Math.floor(count(ms) / 1000);
+    if (total < 60) return total + "s";
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    if (h) return h + "h " + String(m).padStart(2, "0") + "m";
+    return m + "m " + String(total % 60).padStart(2, "0") + "s";
+  }
+
+  // Sets the text and, after the first paint, nudges the number when it changes.
+  function setText(id, text) {
+    const el = $(id);
+    if (el.textContent === text) return;
+    el.textContent = text;
+    if (firstRender) return;
+    el.classList.remove("bump");
+    void el.offsetWidth; // restart the animation
+    el.classList.add("bump");
   }
 
   function renderToggles() {
     $("enabled").checked = !!settings.enabled;
     $("autoClaimPoints").checked = !!settings.autoClaimPoints;
+    document.body.classList.toggle("is-off", !settings.enabled);
   }
 
   function renderStats(stats) {
     const s = { ...STATS_DEFAULTS, ...(stats || {}) };
-    $("adsSkipped").textContent = s.adsSkipped.toLocaleString();
-    $("pointsClaimed").textContent = s.pointsClaimed.toLocaleString();
-    $("timeSaved").textContent = fmtDuration(s.timeSavedMs);
+    const points = stats && "pointsEarned" in stats ? count(s.pointsEarned) : count(s.pointsClaimed) * LEGACY_BONUS_POINTS;
+    setText("adsSkipped", count(s.adsSkipped).toLocaleString());
+    setText("pointsClaimed", points.toLocaleString());
+    setText("timeSaved", fmtDuration(s.timeSavedMs));
+    firstRender = false;
   }
 
   async function save(patch) {
@@ -41,7 +63,10 @@
     try {
       const got = await api.storage.local.get({ stats: STATS_DEFAULTS });
       renderStats(got.stats);
-    } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   async function init() {
@@ -63,7 +88,7 @@
       });
     } catch (_) {}
 
-    await refreshStats();
+    if (!(await refreshStats())) renderStats(null); // storage unreachable: show zeros
     setInterval(refreshStats, 1500);
   }
 
